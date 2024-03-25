@@ -9,12 +9,18 @@
 
 #define HASHSIZE 4096
 #define CMDLINE_LEN 2048
+#define FILENAME_LEN 2048
 
 #define DEFAULT_INTERVAL_SECS 3
-#define METRIC_NAME "proc_consumption_percent"
-#define METRIC_HELP_MESSAGE "HELP "METRIC_NAME" Help\n"
-#define METRIC_TYPE_MESSAGE "TYPE "METRIC_NAME" gauge\n"
-#define METRIC_FORMAT METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
+#define PERCENT_METRIC_NAME "proc_consumption_percent"
+#define PERCENT_METRIC_HELP "HELP "PERCENT_METRIC_NAME" Help\n"
+#define PERCENT_METRIC_TYPE "TYPE "PERCENT_METRIC_NAME" gauge\n"
+#define PERCENT_METRIC_FORMAT PERCENT_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
+
+#define POWER_METRIC_NAME "proc_power"
+#define POWER_METRIC_HELP "HELP "POWER_METRIC_NAME" Help\n"
+#define POWER_METRIC_TYPE "TYPE "POWER_METRIC_NAME" gauge\n"
+#define POWER_METRIC_FORMAT POWER_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
 
 typedef struct proc_info{
   int pid, tcpu_ini, tcpu_end, tcpu;
@@ -24,7 +30,7 @@ typedef struct proc_info{
 
 int get_proc_time(int pid){
   FILE* f;
-  char filename[1024];
+  char filename[FILENAME_LEN];
   int ucpu=0,scpu=0;
   snprintf(filename, sizeof(filename),  "/proc/%d/stat", pid);
 
@@ -41,17 +47,16 @@ int get_proc_time(int pid){
 
 void set_proc_name(int pid, char* n){
   FILE* f;
-  char filename[1024];
+  char filename[FILENAME_LEN];
 
   snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
 
-  if ((f = fopen(filename, "r"))){
+  if ((f = fopen(filename, "r")))
     fread(n,CMDLINE_LEN,1,f);
-  }
 
-  if ((fclose (f))){
+  if ((fclose (f)))
     exit(-1);
-  }
+
 }
 
 int main(int argc, char* argv[]) {
@@ -63,20 +68,23 @@ int main(int argc, char* argv[]) {
   procs = NULL;
 
   unsigned int seconds = DEFAULT_INTERVAL_SECS;
-  unsigned int vm_id = 0;
+  unsigned int vm_id = 0, power = 0;
   int opt;
 
-  while ((opt = getopt(argc, argv, "hs:m:")) != -1) {
+  while ((opt = getopt(argc, argv, "hs:m:p:")) != -1) {
     switch (opt){
       case 's': seconds = atoi(optarg);
               break;
       case 'm': vm_id = atoi(optarg);
               break;
+      case 'p': power = atoi(optarg);
+              break;
       case 'h':
-      default: printf ("Usage: %s [shM]\n", argv[0]);
+      default: printf ("Usage: %s [shMp]\n", argv[0]);
                printf (" h: this help\n");
                printf (" s [numsecs]: seconds to compute the consumption\n");
-               printf (" M [id_vm]: VM ID to show in the metrics\n");
+               printf (" m [id_vm]: VM ID to show in the metrics\n");
+               printf (" p [power]: VM total power consumption in uW\n");
 
                exit(1);
                break;
@@ -116,14 +124,13 @@ int main(int argc, char* argv[]) {
   } 
   closedir(d);
 
-  //printf ("TOTAL_CLICKS: %d\n", total_clicks);
-  //printf (METRIC_HELP_MESSAGE);
-  //printf (METRIC_TYPE_MESSAGE);
-
   for (aux = procs; aux != NULL; aux = aux->hh.next) {
     if (aux->tcpu){
       set_proc_name(aux->pid, aux->name);
-      printf(METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*400)/(total_clicks*4));
+      if (!power)
+        printf(PERCENT_METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*400)/(total_clicks*4));
+      else
+        printf(POWER_METRIC_FORMAT, vm_id, aux->pid, aux->name, aux->tcpu*(power/total_clicks));
     }
   }
 

@@ -57,9 +57,8 @@ def retrieve_stdout_command(vm_id, pid)
   end
 end
 
-def get_proc_consumption(vm_id, interval=3)
-    pid_cmd = issue_command(vm_id, '/opt/opennebula/proc_consumption',"-s #{interval} -m #{vm_id}")
-    power = get_vm_power(vm_id)
+def get_proc_consumption(vm_id, full_power=0, interval=5)
+    pid_cmd = issue_command(vm_id, '/opt/opennebula/proc_consumption',"-s #{interval} -m #{vm_id} -p #{full_power}")
     sleep interval+0.1
     procs_info = retrieve_stdout_command(vm_id, pid_cmd)
     puts procs_info unless procs_info==""
@@ -74,7 +73,7 @@ threads = []
 
 ARGV[0].split(',').each() { |vm_id|
     power ["vm_id"] = grep_power_from_scaphandre_data(vm_id, res)
-    threads << Thread.new { get_proc_consumption(vm_id) }
+    threads << Thread.new { get_proc_consumption(vm_id, power["vm_id"]) }
 }
 
 threads.each(&:join)
