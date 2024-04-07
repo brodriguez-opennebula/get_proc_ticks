@@ -5,10 +5,11 @@
 #include <time.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <fcntl.h>
 #include <uthash.h>
 
 #define HASHSIZE 4096
-#define CMDLINE_LEN 2048
+#define CMDLINE_LEN 4096
 #define FILENAME_LEN 2048
 
 #define DEFAULT_INTERVAL_SECS 3
@@ -55,6 +56,24 @@ void set_proc_name(int pid, char* n){
     fread(n,CMDLINE_LEN,1,f);
 
   if ((fclose (f)))
+    exit(-1);
+
+}
+
+void glibc_set_proc_name(int pid, char* n){
+  int f;
+  char filename[FILENAME_LEN];
+  int l=0;
+
+  snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
+
+  if ((f = open(filename, O_RDONLY)))
+    l = read(f, n, CMDLINE_LEN);
+
+  for (int i=0; i<l; i++)
+    if (n[i]=='\0') n[i]=' ';
+
+  if ((close (f)))
     exit(-1);
 
 }
@@ -126,7 +145,7 @@ int main(int argc, char* argv[]) {
 
   for (aux = procs; aux != NULL; aux = aux->hh.next) {
     if (aux->tcpu){
-      set_proc_name(aux->pid, aux->name);
+      glibc_set_proc_name(aux->pid, aux->name);
       if (!power)
         printf(PERCENT_METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*400)/(total_clicks*4));
       else
