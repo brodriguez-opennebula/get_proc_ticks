@@ -23,7 +23,7 @@
 #define POWER_METRIC_TYPE "TYPE "POWER_METRIC_NAME" gauge\n"
 #define POWER_METRIC_FORMAT POWER_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
 
-typedef struct proc_info{
+struct proc_info{
   int pid, tcpu_ini, tcpu_end, tcpu;
   char name[CMDLINE_LEN];
   UT_hash_handle hh;
@@ -36,7 +36,8 @@ int get_proc_time(int pid){
   snprintf(filename, sizeof(filename),  "/proc/%d/stat", pid);
 
   if ((f = fopen(filename, "r"))){
-    fscanf(f, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d %d %*s", &ucpu, &scpu);
+    if (!fscanf(f, "%*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %*s %d %d %*s", &ucpu, &scpu))
+      exit(-1);
   }
 
   if ((fclose (f))){
@@ -53,7 +54,8 @@ void set_proc_name(int pid, char* n){
   snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
 
   if ((f = fopen(filename, "r")))
-    fread(n,CMDLINE_LEN,1,f);
+    if(!fread(n,CMDLINE_LEN,1,f))
+      exit(-1);
 
   if ((fclose (f)))
     exit(-1);
