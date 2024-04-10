@@ -118,8 +118,8 @@ int main(int argc, char* argv[]) {
   while ((cdir=readdir(d))>0){
     if (sscanf(cdir->d_name, "%d", &pid)){
       aux = malloc(sizeof(struct proc_info));
-      aux -> pid = pid;
-      aux -> tcpu_ini = get_proc_time(pid);
+      aux->pid = pid;
+      aux->tcpu_ini = get_proc_time(pid);
       HASH_ADD_INT(procs, pid, aux);
     }
   } 
@@ -134,13 +134,13 @@ int main(int argc, char* argv[]) {
       HASH_FIND_INT(procs,&pid,aux);
       if (!aux) {
         aux = malloc(sizeof(struct proc_info));
-        aux -> pid = pid;
-        aux -> tcpu_ini = 0;
+        aux->pid = pid;
+        aux->tcpu_ini = 0;
         HASH_ADD_INT(procs, pid, aux);
       }
       aux->tcpu_end = get_proc_time(pid);
       aux->tcpu = abs(aux->tcpu_end - aux->tcpu_ini);
-      total_clicks+=aux->tcpu;
+      total_clicks += aux->tcpu;
     }
   } 
   closedir(d);
