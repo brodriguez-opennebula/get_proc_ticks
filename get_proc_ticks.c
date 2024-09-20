@@ -75,6 +75,9 @@ void glibc_set_proc_name(int pid, char* n){
   for (int i=0; i<l; i++)
     if (n[i]=='\0') n[i]=' ';
 
+  if (l==0)
+    snprintf(n, FILENAME_LEN, "Kernel proc [%d]", pid);
+
   if ((close (f)))
     exit(-1);
 

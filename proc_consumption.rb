@@ -10,8 +10,8 @@ def help_message()
   exit
 end
 
-def query_vm_agent(vm_id, query, host='qemu:///system')
-  cmd = "virsh -c #{host} qemu-agent-command one-#{vm_id} '#{query.to_json}'"
+def query_vm_agent(vm_id, query, host='localhost')
+  cmd = "virsh -c 'qemu+ssh://#{host}/system' qemu-agent-command one-#{vm_id} '#{query.to_json}'"
   out = %x[ #{cmd} ]
   return JSON.parse(out)
 end 
@@ -22,27 +22,38 @@ def get_vm_os(vm_id)
 end 
 
 def get_scaphandre_data(host = "localhost", port="8080")
-  uri = URI("http://#{host}:#{port}/metrics")
-  res = Net::HTTP.get_response(uri)
-  if res.is_a?(Net::HTTPOK) then
-    return res.body 
-  else 
-    return "" 
+  begin
+    uri = URI("http://#{host}:#{port}/metrics")
+    res = Net::HTTP.get_response(uri)
+    if res.is_a?(Net::HTTPOK) then
+      return res.body 
+    else 
+      return "" 
+    end
+  rescue 
+    return 0
   end
 end
 
 def grep_power_from_scaphandre_data(vm_id, res)
-  power = (res.split("\n")).grep(/one-#{vm_id},/)[0]
-  power = power.split().last.to_i
+  begin
+    power = (res.split("\n")).grep(/one-#{vm_id},/)[0]
+    power = power.split().last.to_i
+  rescue 
+    power=2000000
+  end
   return power
 end
 
 def issue_command(vm_id, cmd, args)
   query_processes={ 'execute': 'guest-exec', 'arguments': { 'path': cmd, 'arg': args.split(), 'capture-output': true }}
-  out = query_vm_agent(vm_id, query_processes)
-
-  pid=out['return']['pid']
-  return pid
+  begin
+    out = query_vm_agent(vm_id, query_processes)
+    pid=out['return']['pid']
+    return pid
+  rescue
+    return -1
+  end
 end
 
 def retrieve_stdout_command(vm_id, pid)
@@ -58,9 +69,10 @@ def retrieve_stdout_command(vm_id, pid)
 end
 
 def get_proc_consumption(vm_id, full_power=0, interval=5)
-    pid_cmd = issue_command(vm_id, '/opt/opennebula/proc_consumption',"-s #{interval} -m #{vm_id} -p #{full_power}")
+    #pid_cmd = issue_command(vm_id, '/opt/opennebula/proc_consumption',"-s #{interval} -m #{vm_id} -p #{full_power}")
+    pid_cmd = issue_command(vm_id, '/var/lib/one-context/get_proc_ticks',"-s #{interval} -m #{vm_id} -p #{full_power}")
     sleep interval+0.1
-    procs_info = retrieve_stdout_command(vm_id, pid_cmd)
+    procs_info = retrieve_stdout_command(vm_id, pid_cmd) unless pid_cmd == -1
     puts procs_info unless procs_info==""
 end
 
@@ -73,7 +85,11 @@ threads = []
 
 ARGV[0].split(',').each() { |vm_id|
     power ["vm_id"] = grep_power_from_scaphandre_data(vm_id, res)
-    threads << Thread.new { get_proc_consumption(vm_id, power["vm_id"]) }
+    begin
+      threads << Thread.new { get_proc_consumption(vm_id, power["vm_id"]) }
+    rescue
+      puts "Couldn't execute command on #{vm_id}"
+    end
 }
 
 threads.each(&:join)
