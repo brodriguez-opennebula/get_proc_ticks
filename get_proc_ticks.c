@@ -16,7 +16,7 @@
 #define PERCENT_METRIC_NAME "proc_consumption_percent"
 #define PERCENT_METRIC_HELP "HELP "PERCENT_METRIC_NAME" Help\n"
 #define PERCENT_METRIC_TYPE "TYPE "PERCENT_METRIC_NAME" gauge\n"
-#define PERCENT_METRIC_FORMAT PERCENT_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
+#define PERCENT_METRIC_FORMAT PERCENT_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d.%02d\n"
 
 #define POWER_METRIC_NAME "proc_power"
 #define POWER_METRIC_HELP "HELP "POWER_METRIC_NAME" Help\n"
@@ -152,7 +152,7 @@ int main(int argc, char* argv[]) {
     if (aux->tcpu){
       glibc_set_proc_name(aux->pid, aux->name);
       if (!power)
-        printf(PERCENT_METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*400)/(total_clicks*4));
+        printf(PERCENT_METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*100)/(total_clicks), ((aux->tcpu*10000)/(total_clicks))%100);
       else
         printf(POWER_METRIC_FORMAT, vm_id, aux->pid, aux->name, aux->tcpu*(power/total_clicks));
     }
