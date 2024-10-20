@@ -13,15 +13,8 @@
 #define FILENAME_LEN 2048
 
 #define DEFAULT_INTERVAL_SECS 3
-#define PERCENT_METRIC_NAME "proc_consumption_percent"
-#define PERCENT_METRIC_HELP "HELP "PERCENT_METRIC_NAME" Help\n"
-#define PERCENT_METRIC_TYPE "TYPE "PERCENT_METRIC_NAME" gauge\n"
-#define PERCENT_METRIC_FORMAT PERCENT_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d.%02d\n"
-
-#define POWER_METRIC_NAME "proc_power"
-#define POWER_METRIC_HELP "HELP "POWER_METRIC_NAME" Help\n"
-#define POWER_METRIC_TYPE "TYPE "POWER_METRIC_NAME" gauge\n"
-#define POWER_METRIC_FORMAT POWER_METRIC_NAME"{vm_id=\"%d\",proc_id=\"%d\",cmd=\"%s\"} %d\n"
+#define PERCENT_METRIC_FORMAT "%d\|%d\|%s\|%d.%02d\n"
+#define POWER_METRIC_FORMAT "%d\|%d\|%s\|%d\n"
 
 struct proc_info{
   int pid, tcpu_ini, tcpu_end, tcpu;

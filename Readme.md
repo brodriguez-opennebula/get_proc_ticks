@@ -15,24 +15,41 @@ An example of the output in that case would be
 
 ```
 $ get_proc_ticks
-proc_consumption_percent{vm_id="0",proc_id="1566",cmd="sway "} 20
-proc_consumption_percent{vm_id="0",proc_id="1595",cmd="swaybar -b bar-0 "} 20
-proc_consumption_percent{vm_id="0",proc_id="3596",cmd="/app/brave/brave "} 40
-proc_consumption_percent{vm_id="0",proc_id="8892",cmd="./get_proc_tics "} 20
+0|71|Kernel proc [71]|0.61
+0|98|Kernel proc [98]|0.61
+0|559|/lib/systemd/systemd-oomd |1.22
+0|688|/usr/sbin/thermald --systemd --dbus-enable --adaptive |1.22
+0|690|/bin/warp-svc |0.61
+0|800|/usr/bin/containerd |1.22
+0|2660|/usr/lib/xorg/Xorg vt2 -displayfd 3 -auth /run/user/1000/gdm/Xauthority -nolisten tcp -background none -noreset -keeptty -novtswitch -verbose 3 |1.22
+0|13287|/usr/bin/oned -f |0.61
+0|13288|ruby /usr/lib/one/mads/one_hm.rb -p 2101 -l 2102 -b 127.0.0.1 |0.61
+0|41524|tmux |0.61
+0|2669819|/usr/libexec/gnome-terminal-server |1.22
+........
 ```
 
 If some power is set up, the command would show the following
 
 ```
 $ get_proc_ticks -p 9000000 -m 66
-proc_power{vm_id="66",proc_id="18",cmd=""} 900000
-proc_power{vm_id="66",proc_id="855",cmd=""} 900000
-proc_power{vm_id="66",proc_id="1105",cmd="tuigreet --cmd /bin/sh"} 1800000
-proc_power{vm_id="66",proc_id="3490",cmd="/app/brave/brave"} 900000
-proc_power{vm_id="66",proc_id="3596",cmd="/app/brave/brave"} 1800000
-proc_power{vm_id="66",proc_id="4112",cmd="/app/brave/brave"} 900000
-proc_power{vm_id="66",proc_id="8893",cmd=""} 900000
-proc_power{vm_id="66",proc_id="10964",cmd="./get_proc_tics -p 9000000 -m 66 "} 900000
+66|96|Kernel proc [96]|50847
+66|103|Kernel proc [103]|50847
+66|499|Kernel proc [499]|50847
+66|690|/bin/warp-svc |101694
+66|782|/usr/sbin/libvirtd |152541
+66|800|/usr/bin/containerd |101694
+66|2660|/usr/lib/xorg/Xorg vt2 -displayfd 3 -auth /run/user/1000/gdm/Xauthority -nolisten tcp -background none -noreset -keeptty -novtswitch -verbose 3 |101694
+66|2804|/usr/bin/ibus-daemon --daemonize --xim |50847
+66|2854|i3status |101694
+66|2905|/bin/warp-taskbar |50847
+66|41524|tmux |50847
+66|948376|Kernel proc [948376]|50847
+66|997044|/usr/bin/vim /home/administrador/sources/one-ee/.git/COMMIT_EDITMSG |50847
+66|1002587|./get_proc_ticks -p 9000000 -m 66 |50847
+66|2020028|ruby /var/tmp/one/im/kvm.d/monitord-client.rb kvm 6 127.0.0.1 |50847
+66|2669819|/usr/libexec/gnome-terminal-server |50847
+...
 ```
 
 ### Compilation
