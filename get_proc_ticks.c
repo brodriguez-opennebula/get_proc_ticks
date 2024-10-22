@@ -6,20 +6,21 @@
 #include <stdlib.h>
 #include <unistd.h>
 #include <fcntl.h>
-#include <uthash.h>
+
+#define STB_DS_IMPLEMENTATION
+#include "stb_ds.h"
 
 #define HASHSIZE 4096
 #define CMDLINE_LEN 4096
 #define FILENAME_LEN 2048
 
 #define DEFAULT_INTERVAL_SECS 3
-#define PERCENT_METRIC_FORMAT "%d\|%d\|%s\|%d.%02d\n"
-#define POWER_METRIC_FORMAT "%d\|%d\|%s\|%d\n"
+#define PERCENT_METRIC_FORMAT "%d|%d|%s|%d.%02d\n"
+#define POWER_METRIC_FORMAT "%d|%d|%s|%d\n"
 
 struct proc_info{
   int pid, tcpu_ini, tcpu_end, tcpu;
   char name[CMDLINE_LEN];
-  UT_hash_handle hh;
 };
 
 int get_proc_time(int pid){
@@ -83,6 +84,7 @@ int main(int argc, char* argv[]) {
   struct proc_info *procs, *aux;
   int total_clicks=0;
   procs = NULL;
+  struct {int key; struct proc_info* value;} *intmap = NULL;
 
   unsigned int seconds = DEFAULT_INTERVAL_SECS;
   unsigned int vm_id = 0, power = 0;
@@ -116,7 +118,7 @@ int main(int argc, char* argv[]) {
       aux = malloc(sizeof(struct proc_info));
       aux->pid = pid;
       aux->tcpu_ini = get_proc_time(pid);
-      HASH_ADD_INT(procs, pid, aux);
+      hmput(intmap, pid, aux);
     }
   } 
   closedir(d);
@@ -127,12 +129,12 @@ int main(int argc, char* argv[]) {
   while ((cdir=readdir(d))>0){
     if (sscanf(cdir->d_name, "%d", &pid)){
       aux = NULL;
-      HASH_FIND_INT(procs,&pid,aux);
+      aux = hmget(intmap, pid);
       if (!aux) {
         aux = malloc(sizeof(struct proc_info));
         aux->pid = pid;
         aux->tcpu_ini = 0;
-        HASH_ADD_INT(procs, pid, aux);
+        hmput(intmap, pid, aux);
       }
       aux->tcpu_end = get_proc_time(pid);
       aux->tcpu = abs(aux->tcpu_end - aux->tcpu_ini);
@@ -141,7 +143,8 @@ int main(int argc, char* argv[]) {
   } 
   closedir(d);
 
-  for (aux = procs; aux != NULL; aux = aux->hh.next) {
+  for (int i=0; i < hmlen(intmap); i++){
+    aux = intmap[i].value;
     if (aux->tcpu){
       glibc_set_proc_name(aux->pid, aux->name);
       if (!power)

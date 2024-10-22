@@ -52,9 +52,12 @@ $ get_proc_ticks -p 9000000 -m 66
 ...
 ```
 
+### Dependencies
+
+- [`stb_ds.h`](https://github.com/nothings/stb/blob/master/stb_ds.h): typesafe hash tables for C written by Sean Barrett. It is a single file downloaded from github when executing a `make deps`
+
 ### Compilation
 
-Dependencies: 
-- uthash ( https://troydhanson.github.io/uthash/ ) to create a hash of the running processes. There must be a development package for each major distribution, please check your packages.
-
-After that, it can be compiled with a simple `make` command
+```
+make
+```
