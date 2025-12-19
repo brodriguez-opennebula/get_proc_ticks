@@ -52,7 +52,7 @@ $ get_proc_ticks -p 9000000 -m 66
 ...
 ```
 
-### Dependencies
+### Dependencies (besides standard C libraries)
 
 - [`stb_ds.h`](https://github.com/nothings/stb/blob/master/stb_ds.h): typesafe hash tables for C written by Sean Barrett. It is a single file downloaded from github when executing a `make deps`
 
@@ -61,3 +61,5 @@ $ get_proc_ticks -p 9000000 -m 66
 ```
 make
 ```
+
+This will create a standalone binary. The glibc static version can be around 10x bigger size than a musl static one.
