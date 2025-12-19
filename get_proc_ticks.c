@@ -10,13 +10,15 @@
 #define STB_DS_IMPLEMENTATION
 #include "stb_ds.h"
 
+#define HASHPROC struct {int key; struct proc_info* value;} 
+
 #define HASHSIZE 4096
 #define CMDLINE_LEN 4096
 #define FILENAME_LEN 2048
 
 #define DEFAULT_INTERVAL_SECS 3
 #define PERCENT_METRIC_FORMAT "%d|%d|%s|%d.%02d\n"
-#define POWER_METRIC_FORMAT "%d|%d|%s|%d\n"
+#define POWER_METRIC_FORMAT "%d|%d|%s|%d|%d.%02d\n"
 
 struct proc_info{
   int pid, tcpu_ini, tcpu_end, tcpu;
@@ -42,21 +44,6 @@ int get_proc_time(int pid){
 }
 
 void set_proc_name(int pid, char* n){
-  FILE* f;
-  char filename[FILENAME_LEN];
-
-  snprintf(filename, sizeof(filename), "/proc/%d/cmdline", pid);
-
-  if ((f = fopen(filename, "r")))
-    if(!fread(n,CMDLINE_LEN,1,f))
-      exit(-1);
-
-  if ((fclose (f)))
-    exit(-1);
-
-}
-
-void glibc_set_proc_name(int pid, char* n){
   int f;
   char filename[FILENAME_LEN];
   int l=0;
@@ -77,14 +64,33 @@ void glibc_set_proc_name(int pid, char* n){
 
 }
 
+int load_cpu_ticks(HASHPROC *intmap ) {
+  DIR* d;
+  struct dirent* cdir;
+  int pid;
+  struct proc_info *aux;
+
+  d = opendir("/proc");
+  while ((cdir=readdir(d))>0){
+    if (sscanf(cdir->d_name, "%d", &pid)){
+      aux = malloc(sizeof(struct proc_info));
+      aux->pid = pid;
+      aux->tcpu_ini = get_proc_time(pid);
+      hmput(intmap, pid, aux);
+    }
+  } 
+  closedir(d);
+
+  return 0;
+}
+
 int main(int argc, char* argv[]) {
   DIR* d;
   struct dirent* cdir;
   int pid;
-  struct proc_info *procs, *aux;
+  struct proc_info *aux;
   int total_clicks=0;
-  procs = NULL;
-  struct {int key; struct proc_info* value;} *intmap = NULL;
+  HASHPROC *intmap = NULL;
 
   unsigned int seconds = DEFAULT_INTERVAL_SECS;
   unsigned int vm_id = 0, power = 0;
@@ -146,13 +152,15 @@ int main(int argc, char* argv[]) {
   for (int i=0; i < hmlen(intmap); i++){
     aux = intmap[i].value;
     if (aux->tcpu){
-      glibc_set_proc_name(aux->pid, aux->name);
+      set_proc_name(aux->pid, aux->name);
       if (!power)
         printf(PERCENT_METRIC_FORMAT, vm_id, aux->pid, aux->name, (aux->tcpu*100)/(total_clicks), ((aux->tcpu*10000)/(total_clicks))%100);
       else
-        printf(POWER_METRIC_FORMAT, vm_id, aux->pid, aux->name, aux->tcpu*(power/total_clicks));
+        printf(POWER_METRIC_FORMAT, vm_id, aux->pid, aux->name, aux->tcpu*(power/total_clicks), (aux->tcpu*100)/(total_clicks), ((aux->tcpu*10000)/(total_clicks))%100);
     }
   }
+
+  hmfree(intmap);
 
   return (0);
 }
